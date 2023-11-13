@@ -1,138 +1,58 @@
-= Managing an Application from GitHub
+Click on the `+Jupyter Notebook+` tab near the top of the lab window.
+This will open your Jupyter Notebook in a new tab.
 
-In the first half of this workshop, we packaged an application into this portable container format manually using rpms.
-In the second half, we will consider that you may want to manage software from GitHub or some kind of software versioning application.
-Rather than installing rpms, we have individual software files and pull them out of that version control into a group of systems.
+When presented with a login screen, enter `+redhat+` into the password
+box and click `+Log in+`.
+image:../assets/jupyter-login.png[../assets/jupyter-login]
 
-== Install RHEL 8 UBI
+When you reach the notebook’s main menu, click on the check box to the
+left of `+neural_network.ipynb+`, and then click open.
+image:../assets/neural_network_open.png[../assets/neural_network_open]
 
-In this lab, we will be using a different Red Hat Enterprise Linux version in my container. 
+First, take a look at the Jupyter Notebook. You’ll notice that is
+structured as code surrounded by formatted text, offering context as to
+what the code is doing. In its current state, there is no visible output
+from your code. To view the output of your code, you will need to run
+the program.
 
-. Verify the host system release 
+To run all of the code, click on the button pictured below:
+image:../assets/jupyter_play_neural.png[../assets/jupyter_play_neural]
 
-+
-[source,bash]
-----
-cat /etc/redhat-release
-----
-+ 
-NOTE: The `bastion` system is Red Hat Enterprise Linux 9, and when you built the previous container, you used the UBI9 image. This means both the image and the container were built off the same Red Hat Enterprise Linux packages. 
+Next, you will be prompted with a dialog box asking whether you wish to
+restart the kernel. Click `+Restart+`.
+image:../assets/jupyter_run_all_neural.png[../assets/jupyter_run_all_neural]
+The kernel will restart and your program will run. This will take about
+five seconds to finish.
 
-. As we did previously in this lab, Use `buildah from` to pull down the Red Hat Enterprise Linux 8 UBI.
+Once the program has run, scroll to the bottom of the Jupyter Notebook
+to view the output of the program. Although the numbers will vary, you
+should notice a general trend. The loss is decreasing as the model goes
+through training. This indicates that the accuracy of the model is
+improving. The output should look something like this:
 
-+
-[source,bash]
-----
-buildah from registry.access.redhat.com/ubi8/ubi
-----
+#1 Loss: 0.15329430997371674 #2 Loss: 0.11386959999799728 #3 Loss:
+0.08571985363960266 #4 Loss: 0.0658247247338295 #5 Loss:
+0.05170382186770439 #6 Loss: 0.04154754430055618 #7 Loss:
+0.03411033749580383 #8 Loss: 0.02855597995221615 #9 Loss:
+0.024325629696249962 #10 Loss: 0.021043190732598305 #11 Loss:
+0.01845221407711506 #12 Loss: 0.0163748599588871 #13 Loss:
+0.014685723930597305 #14 Loss: 0.013294734992086887 #15 Loss:
+0.01213615108281374 #16 Loss: 0.011161181144416332 #17 Loss:
+0.010333112441003323 #18 Loss: 0.009623898193240166 #19 Loss:
+0.00901184044778347 #20 Loss: 0.00847998633980751 << OUTPUT ABRIDGED >>
+#80 Loss: 0.00332625606097281 #81 Loss: 0.0033161791507154703 #82 Loss:
+0.003306429600343108 #83 Loss: 0.003297006944194436 #84 Loss:
+0.003287883475422859 #85 Loss: 0.003279038006439805 #86 Loss:
+0.003270472167059779 #87 Loss: 0.0032621577847748995 #88 Loss:
+0.0032540960237383842 #89 Loss: 0.0032462747767567635 #90 Loss:
+0.00323866936378181 #91 Loss: 0.003231281181797385 #92 Loss:
+0.003224095096811652 #93 Loss: 0.003217114368453622 #94 Loss:
+0.00321030686609447 #95 Loss: 0.003203692613169551 #96 Loss:
+0.0031972324941307306 #97 Loss: 0.003190945601090789 #98 Loss:
+0.003184819594025612 #99 Loss: 0.0031788365449756384 #100 Loss:
+0.0031729976180940866 Predicted data based on trained weights: Input
+(scaled): tensor([0.5000, 1.0000]) Output: tensor([0.9332]) ```
 
-NOTE: Because you already pulled one image named `ubi-working-container` this one is called `ubi-working-container-1`. 
-
-[#prerequisites]
-== Install Prerequisites
-
-Now that you have a working container, you will use the same process as before installing all the prerequisites, changing config files, and manipulating the contents of this container to be in the desired state.
-
-The software you will install is a JavaScript-based game that runs on a web browser. As before in the lab, use dnf to install software inside the container. 
-
-. Use `buildah run` and install Apache (`httpd`) into the `ubi-working-container-1` container. 
-+
-[source,bash]
-----
-buildah run ubi-working-container-1 -- dnf -y install httpd
-----
-
-== Enable Service
-
-The next thing to do is to use a systemctl to enable the service. The ubi-init provides full systemd service to the container.
-This will start up any of the services that are enabled. 
-
-. Enable the `httpd` service using `buildah run`
-
-+
-[source,bash]
-----
-buildah run ubi-working-container-1 -- systemctl enable httpd
-----
-
-NOTE: The UBI standard image doesn't have systemd installed on it by default. The `ubi-init` container image does include systemd. Plan accordingly to which image you use to build applications.  
-
-== Explore Source Materials
-
-A GitHub repository has already been synchronized to `/home/devops/clumsy-bird/` This repository contains the configurations for your application.
-
-. Verify the repository is cloned inside the `/home/devops/` directory
-+
-[source,bash]
-----
-cd /home/devops/
-----
-
-+
-[source,bash]
-----
-git clone https://github.com/ellisonleao/clumsy-bird
-----
-+
-NOTE: The output states that the software has already been checked out. 
-+
-. Explore the JavaScript contents, index files, and everything else that we need for this web-based JavaScript software.
-+
-[source,bash,role=execute]
-----
-ls clumsy-bird
-----
-
-== Add Source Materials to Container
-
-. Now that you have verified the source materials exist, you will put the software inside of my container image using the `buildah copy` command.
-+
-[source,bash]
-----
-buildah copy ubi-working-container-1 clumsy-bird /var/www/html
-----
-
-[#container]
-== Enable Container in Background
-
-In the previous section of this lab, you ran the game natively through interactive mode. Because you are now building a web application you will need to run the container in the background and access it through a web address. 
-
-. Execute `buildah config` to specify a port and initialize the container. 
-
-+
-[source,bash]
-----
-buildah config --port 80 --cmd "/usr/sbin/init" ubi-working-container-1
-----
-
-NOTE: The command makes a configuration change to this container. I'm configuring this container to accept connections to its port 80. When the container starts up, it should run the init command, which, in this case, is going to be the Apache daemon right from earlier when I enabled it.
-
-== Commit Container and Deploy
-
-. Now that we have a container in a working configured state, it is time to make that permanent by committing it to a container image called `clumsy-bird`
-+
-[source,bash]
-----
-buildah commit ubi-working-container-1 clumsy-bird
-----
-
-. Verify that the image was created with `podman`
-+
-[source,bash]
-----
-podman images
-----
-+
-. Run the container Now it's time to run the container. 
-+
-[source,bash]
-----
-podman run -d -p 8500:80 clumsy-bird
-----
-
-== Verify Application
-
-Verify that the application is running by navigating to
-
-http://bastion.{guid}.example.opentlc.com:8500
-
+You have now successfully trained a neural network in Red Hat Enterprise
+Linux. This concludes the lab, but feel free to explore further until
+the lab session expires.
